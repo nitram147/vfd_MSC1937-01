@@ -1,25 +1,53 @@
-/* +------------------------------------------------+ */
-/* |             Atmel Vfd 16x1 kniznica            | */
-/* |             Atmel Vfd 16x1 library             | */
-/* | (c)copyright 2015 nitram147 (www.nitram147.eu) | */
-/* +------------------------------------------------+ */
+/* +--------------------------------------------+ */
+/* |  AVR VFD 16x1 Library (Driver MSC1937-01)  | */
+/* |                   vfd.h                    | */
+/* | (c)copyright nitram147 [Martin Ersek] 2018 | */
+/* +--------------------------------------------+ */
+#ifndef VFD_H
+#define VFD_H
 
-void power_on_reset(void);//potrebny pri starte / needed during start
-void writewwwnitram147eu(void);//vypis wwwnitram147eu / write wwwnitram147eu
-void menjas(int jas);//meni jas - rozsah hodnot 0-31 / change brightness - from 0 to 31
-void pridavajjas(void);//postupne plynule pridava jas / smoothly adjusting (incrementing) brightness
-void uberajjas(void);//postupne plynule ubera jas / smoothly adjusting (deincrementing) brightness
-void pisc(char piscc);//vypise znak / write one char
-void pis(const char *s);//vypise znaky / write multiple chars
-void chodna(int pozicia);//chod na poziciu na displeji - 1 az 16 / go to position on display - range 1 - 16
-void zmazdisplej(void);//zmaze displej / clear displej
-void posuvajtext(const char *s);//posuva text po displeji / moving text on display
-void posuvajtext2(const char *s);//posuva text po displeji / moving text on display
-void initvfd(void);//inicializacia vfd / initialization of vfd
+#define VFD_DISPLAY_CHAR_LENGTH 16
+#define VFD_WAIT_BRIGHTNESS_TIME 200
+#define VFD_WAIT_SCROLL_TIME 200
 
-#define cakajpostupne() _delay_ms(200);//cas medzi postupnym pridavanim jasu / time between smoothly adjusting brightness
-#define cakajposun() _delay_ms(200);//cas (rychlost) posuvania textu po displayi / time (speed) of moving text on display
-#define poweronresetddr DDRD	//ddr portu na poweronreset pin / ddr of port on poweronreset pin
-#define poweronresetport PORTD	//ddr portu na poweronreset pin / ddr of port on poweronreset pin
-#define poweronresetpin PD0	//nazov pinu na poweronreset / name of pin for powerofreset
+#define VFD_POWERONRESET_DDR DDRD
+#define VFD_POWERONRESET_PORT PORTD
+#define VFD_POWERONRESET_BIT PD0
 
+#define VFD_MAX_BRIGHTNESS 31
+
+#define VFD_CHANGE_BRIGHTNESS 0b11100000
+#define VFD_PUTCHAR 0b00111111
+#define VFD_GOTO 0b10100000
+
+#define vfd_wait_brightness() _delay_ms(VFD_WAIT_BRIGHTNESS_TIME)
+#define vfd_wait_scroll() _delay_ms(VFD_WAIT_SCROLL_TIME)
+
+//init vfd display
+void vfd_init();
+
+//change brightness, allowed range 0-31
+void vfd_change_brightness(uint8_t tmp_brightness);
+
+//adjust brightness from zero to max smoothly with VFD_WAIT_BRIGHTNESS_TIME ms step delay
+void vfd_zero_to_max_brightness();
+
+//adjust brightness from max to zero smoothly with VFD_WAIT_BRIGHTNESS_TIME ms step delay
+void vfd_max_to_zero();
+
+//write char to display
+void vfd_putc(char tmp_char);
+
+//write string to display
+void vfd_puts(const char *tmp_string);
+
+//goto position on display, indexes starting from 1 !!!, valid range 1-16
+void vfd_goto(uint8_t tmp_position);
+
+//clear display and set position to start
+void vfd_clear();
+
+//move string from left to right with space prefix and suffix
+void vfd_move_text_left_to_right(char *tmp_string);
+
+#endif

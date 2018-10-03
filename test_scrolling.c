@@ -1,78 +1,29 @@
 /* +--------------------------------------------+ */
 /* |  AVR VFD 16x1 Library (Driver MSC1937-01)  | */
-/* |                   vfd.c                    | */
+/* |              test_scrolling.c              | */
 /* | (c)copyright nitram147 [Martin Ersek] 2018 | */
 /* +--------------------------------------------+ */
-#include <avr/io.h>
-#include <util/delay.h>
-#include <stdlib.h>
 
-#include "spi.h"
-#include "vfd.h"
-			
-static void power_on_reset(){
-	VFD_POWERONRESET_PORT &= ~(1<<VFD_POWERONRESET_BIT);
-	_delay_us(200);
-	VFD_POWERONRESET_PORT |= (1<<VFD_POWERONRESET_BIT);
-	_delay_us(1);
-}
+/* Test for vfd scrolling function */
+#include <stdio.h>
+#include <stdint.h>
 
-void vfd_init(){
-	VFD_POWERONRESET_DDR |= (1<<VFD_POWERONRESET_BIT);
-	InitSPI();
-	_delay_ms(100);
-	power_on_reset();
-	_delay_ms(1);	
-}
-
-void vfd_change_brightness(uint8_t tmp_brightness){
-	if(tmp_brightness > VFD_MAX_BRIGHTNESS) return;
-	WriteByteSPI(VFD_CHANGE_BRIGHTNESS | tmp_brightness);
-	_delay_ms(1);
-}
-
-void vfd_zero_to_max_brightness(){
-	for(uint8_t i=0; i<VFD_MAX_BRIGHTNESS+1; ++i){
-		vfd_change_brightness(i);
-		vfd_wait_brightness();
-	}
-}
-
-void vfd_max_to_zero(){
-	for(uint8_t i=VFD_MAX_BRIGHTNESS; i; --i){
-		vfd_change_brightness(i);
-		vfd_wait_brightness();
-	}	
-}
+#define VFD_DISPLAY_CHAR_LENGTH 16
 
 void vfd_putc(char tmp_char){
-	WriteByteSPI(VFD_PUTCHAR & tmp_char);
-	_delay_us(41);	
-}
-
-void vfd_puts(const char *tmp_string){
-	register char tmp_char;
-	while((tmp_char = *tmp_string++)){
-		if(tmp_char >= 'a' && tmp_char <= 'z') tmp_char -= ('a' - 'A');
-		vfd_putc(tmp_char);
-	}
-}
-
-void vfd_goto(uint8_t tmp_position){
-	if(!tmp_position || tmp_position > VFD_DISPLAY_CHAR_LENGTH) return;
-
-	if(tmp_position == 1) tmp_position = 15;
-	else tmp_position -= 2;
-
-	WriteByteSPI(VFD_GOTO | pozicia);
-	_delay_us(41);
+	printf("%c", tmp_char);
 }
 
 void vfd_clear(){
-	for(uint8_t i=VFD_DISPLAY_CHAR_LENGTH; i; --i){
-		vfd_putc(' ');
-		vfd_goto(1);
-	}
+	printf("\n");
+}
+
+void vfd_wait_scroll(){
+	return;
+}
+
+void vfd_goto(uint8_t tmp_position){
+	vfd_clear();
 }
 
 static size_t strlen(const char *tmp_string){
@@ -126,4 +77,22 @@ void vfd_move_text_left_to_right(char *tmp_string){
 	}
 
 	vfd_clear();
+}
+
+int main(){
+
+	vfd_move_text_left_to_right("Scrolltest");
+	printf("--------------------------------------\n");
+	vfd_move_text_left_to_right("");
+	printf("--------------------------------------\n");
+	vfd_move_text_left_to_right("ab!");
+	printf("--------------------------------------\n");
+	vfd_move_text_left_to_right("0123456789ABCDEF");
+	printf("--------------------------------------\n");
+	vfd_move_text_left_to_right("aaaaawwwdsadadsadasdsanfdsfdsf");
+	printf("--------------------------------------\n");
+	vfd_move_text_left_to_right("Some very long sentence, really long, foo bar bar foo !!!");
+	printf("--------------------------------------\n");
+
+	return 0;
 }
